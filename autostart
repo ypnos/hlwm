@@ -16,6 +16,7 @@ hc keyunbind --all
 
 # keybindings
 Mod=Mod4 # win
+Alt=Mod1 # alt key
 Ctrlalt=Mod1-Control # ctrl+alt
 hc keybind $Mod-Control-q close
 hc keybind $Mod-Control-r reload
@@ -98,6 +99,7 @@ hc set focus_follows_shift 1
 
 hc keybind $Mod-BackSpace   cycle_monitor
 hc keybind $Mod-Tab         cycle_all +1
+hc keybind $Alt-Tab         cycle_all +1
 hc keybind $Mod-Shift-Tab   cycle_all -1
 hc keybind $Mod-c cycle
 hc keybind $Mod-Up focus up

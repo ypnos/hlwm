@@ -2,12 +2,18 @@
 use v5.20;
 
 my %actof = (); # mapping tag -> activity
-my %tagof = (); # mapping activity -> used tag
+my %tagof = (); # mapping activity -> last used tag
 my $current_activity = -1;
 my $current_tag = -1;
-my %index = (); # for each activity, an array of tags
+my %index = (); # for each activity, an array of tags ordered by their indices
 my %actcolor = (); # a distinguishing color string for each activity
 
+## Query hlwm object system to find all tags according to their index.
+# When cycling through tags, the user expects them to be ordered by their native
+# index (based on creation time, but changes when tags get deleted). The index is
+# not exposed by hlwm's hooks and tracking index changes is infeasible. That's why
+# we reconstruct the order explicitely as soon as we need it; we invalidate our own
+# version of the indexing whenever a hook tells us that index changes are possible
 sub build_index
 {
 	my $last = `herbstclient attr tags.count` - 1;
@@ -18,6 +24,18 @@ sub build_index
 	}
 }
 
+## Give visual feedback of the activity selection
+# Right now we change the active window's border color to the activity's color.
+# TODO: This should not be hardcoded but rather do some configurable stuff.
+sub redecorate
+{
+	system("herbstclient", "set", "window_border_active_color",
+		"$actcolor{$current_activity}");
+}
+
+## Handle tag addition
+# Assign the new tag to the current activity. Invalidate tag index.
+# In case the activity was empty, the tag becomes the activity's current tag.
 sub tag_added
 {
 	my ($in, $tag) = @_;
@@ -31,13 +49,20 @@ sub tag_added
 	%index = ();
 }
 
+## Handle tag removal
+# When a tag is removed, it is merged with another one. If the other tag belongs to
+# the same activity, we can reset the current tag (if needed). Otherwise we are
+# stuck with a very unpleasant situation (TODO FIXME)
 sub tag_removed
 {
 	my ($in, $tag, $mergetag) = @_;
-	foreach (keys %tagof) {
-		if ($tagof{$_} eq $tag) {
-			$tagof{$_} = $mergetag;
+	my $activity = $actof{$tag};
+	if ($tagof{$activity} eq $tag) { # oups.. we delete the current tag!
+		if ($actof{$mergetag} eq $activity) {
+			$tagof{$activity} = $mergetag;
 			print "current tag of activity $_ is now $tagof{$_}\n";
+		} else {
+			$tagof{$activity} = -1; # TODO: might make the activity unreachable
 		}
 	}
 	delete $actof{$tag};
@@ -46,29 +71,36 @@ sub tag_removed
 	%index = ();
 }
 
+## Keep track of tag renaming
+# TODO: hlwm does not tell us *which* tag was renamed. We wait for a fix.
 sub tag_renamed
 {
-#my ($in, $tag) = @_;
-#delete $actof{ $tag };
+	#my ($in, $tag) = @_;
+	#delete $actof{ $tag };
 	print "TODO: tag rename hook broken in hlwm!\n";
 	#invalidate index
 	%index = ();
 }
 
+## Keep track of current tag
+# We might need to implicitely change the activity.
 sub tag_selected
 {
 	my ($in, $tag, $monitor) = @_;
-	$current_tag = $tag;
+	$current_tag = $tag; # helpful for tag cycling
 	if ($actof{$tag} ne $current_activity) {
 		$current_activity = $actof{$tag};
 		print "implicitely switched to activity $current_activity\n";
-		system("herbstclient", "set", "window_border_active_color",
-			"$actcolor{$current_activity}");
+		redecorate();
 	}
 	$tagof{$current_activity} = $tag;
 	print "current tag of activity $current_activity is now $tag\n";
 }
 
+## Cycle through tags within an activity
+# Instead of the internal tag changing with +1/-1, we provide a rudimentary
+# wrapper that keeps tab switching within the current activity.
+# TODO: provide more options than just next/prev. E.g. absolute indices.
 sub tag_cycle
 {
 	my ($in, $command) = @_;
@@ -76,42 +108,57 @@ sub tag_cycle
 		build_index();
 	}
 	my @arr = @{$index{$current_activity}};
+	# find position of current tag in the array of activity's tags
 	my ($idx) = grep { $arr[$_] eq $current_tag } 0..$#arr;
 	$idx += 1 if ($command eq 'next');
 	$idx -= 1 if ($command eq 'prev');
-	$idx = $#arr if ($idx < 0);
-	$idx = 0 if ($idx > $#arr);
-	print "$idx in $#arr, use $arr[$idx]\n";
+	$idx = $#arr if ($idx < 0); # wrap around
+	$idx = 0 if ($idx > $#arr); # wrap around
+	print "switching to tag $arr[$idx] ($idx in 0..$#arr)\n";
 	system("herbstclient", "use", $arr[$idx]);
 }
 
+## Activate an activity (nifty)
+# Send hlwm to the acitivity's current tag and also redecorate.
 sub activity_selected
 {
 	my ($in, $activity) = @_;
 	if ($activity ne $current_activity) {
 		$current_activity = $activity;
+		# move to a tag within the activity if possible
 		if ($tagof{$current_activity} ne -1) {
 			system("herbstclient", "use", $tagof{$current_activity});
 		}
+		# If not possible, we still internally handle this as the current activity.
+		# Newly created tags will be assigned to the current (this) activity!
 		print "changed activity to $current_activity, '$actcolor{$current_activity}'\n";
-		system("herbstclient", "set", "window_border_active_color",
-			"$actcolor{$current_activity}");
+		redecorate(); #slightly inconsistent
 	}
 }
 
+## Add new activity
+# Simple initialization only.
 sub activity_added
 {
 	my ($in, $activity, $color) = @_;
 	$tagof{$activity} = -1;
 	$actcolor{$activity} = $color;
-#	if ($current_activity == -1) {
-#		$current_activity = $activity;
-#	}
 	print "added activity $activity with color $actcolor{$activity}\n";
 }
 
+## Remove activity
+# Poor tags, where do they go?
+sub activity_removed
+{
+	# TODO: an exercise for the reader!
+}
+
+## main routine
+
+# set up a pipe for reading hooks
 open HOOKS, "herbstclient -i |"
 	or die "can't fork: $!";
+# process incoming messages
 while (<HOOKS>) {
 	chomp;
 	#print " # $_\n";
@@ -126,4 +173,4 @@ while (<HOOKS>) {
 		activity_removed(split(/\t/)) when /activity_removed/;
 	}
 }
-close HOOKS or die "unfinished love story: $! $?";
+close HOOKS or die "unfinished love story: $! $?"; # happens on hlwm crash
