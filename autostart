@@ -16,6 +16,7 @@ hc keyunbind --all
 
 # keybindings
 Mod=Mod4 # win
+Alt=Mod1 # alt key
 Ctrlalt=Mod1-Control # ctrl+alt
 hc keybind $Mod-Control-q close
 hc keybind $Mod-Control-r reload
@@ -24,10 +25,9 @@ hc keybind $Mod-Return spawn qterminal
 #hc keybind XF86PowerOff spawn xlock
 hc keybind $Mod-l spawn xscreensaver-command -lock
 
-# tags
+# activities and tags
 ACT_NAMES=( main devel write admin )
-# '#E04613'
-ACT_COLORS=( '#DD0000' '#13B8E0' '#96E013' '#C713E0' )
+ACT_COLORS=( '#DD0000' '#13B8E0' '#96E013' '#C713E0' ) # '#E04613'
 ACT_KEYS=( {1..4} )
 TAG_NAMES=( un deux trois )
 
@@ -98,6 +98,7 @@ hc set focus_follows_shift 1
 
 hc keybind $Mod-BackSpace   cycle_monitor
 hc keybind $Mod-Tab         cycle_all +1
+hc keybind $Alt-Tab         cycle_all +1
 hc keybind $Mod-Shift-Tab   cycle_all -1
 hc keybind $Mod-c cycle
 hc keybind $Mod-Up focus up
