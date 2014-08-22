@@ -159,6 +159,7 @@ sub activity_removed
 open HOOKS, "herbstclient -i |"
 	or die "can't fork: $!";
 # process incoming messages
+OUTER:
 while (<HOOKS>) {
 	chomp;
 	#print " # $_\n";
@@ -171,6 +172,7 @@ while (<HOOKS>) {
 		activity_selected(split(/\t/)) when /activity_changed/;
 		activity_added(split(/\t/)) when /activity_added/;
 		activity_removed(split(/\t/)) when /activity_removed/;
+		last OUTER when /reload/; # quit on reload
 	}
 }
 close HOOKS or die "unfinished love story: $! $?"; # happens on hlwm crash
