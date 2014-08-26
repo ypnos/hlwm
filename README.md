@@ -3,6 +3,8 @@ hlwm
 
 My config and scripts for herbstluftwm. Right now consists of activities.pl and the corresponding section in autostart (and my pretty random personal preferences).
 
+**Note:** This does not work with release 0.6.2! It needs a feature from current git!
+
 Activities
 =========
 
