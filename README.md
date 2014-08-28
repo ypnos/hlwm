@@ -22,7 +22,7 @@ You can add a new activity, which has a name, and a color, anytime. When you add
 
 You can still directly access any tag. If you access a tag in activity X directly coming from activity Y, the system will notice that you are now in activity X and remember that you visited this tag in activity X last. In most cases, though, you might want to cycle through the tags within a specific activity. Right now you can cycle left and right based on the internal index of each tag (tag indices are assigned by herstbluftwm and depend on the creation time). A good number of tags per activity is three: In any tag you can reach each other tag by going either left or right. However, the system supports any number of tags for each activity. This is different than the KDE system, where the number of workspaces is the same for all activities.
 
-To discern activities, the activity's color is used as the focused window border color. This is hardcoded and should be more flexible in the future. However activities.pl is a small script and easy to alter.
+To discern activities, the activity's color is used as the focused window border color by the redecorate.pl script.
 
 Usage
 -------
@@ -35,12 +35,17 @@ To be able to read debug output during the session you can run it like this:
 
 Use herstbclient (directly or via key binding) to issue commands:
 
-`emit_hook activity_added _name_ _color code_` add an activity
-`emit_hook activity_changed _name_` switch to activity
-`emit_hook activity_removed _name_` TODO: not implemented yet!
+`emit_hook activity_create _name_` add an activity
+`emit_hook activity_switch _name_` switch to activity
+`emit_hook activity_delete _name_` TODO: not implemented yet!
 `emit_hook activity_tag _next|prev_` cycle to right/left tag within activity
 
 Newly created tags are always added to the current activity. It is not possible yet to move tags between activities (TODO).
+
+The activities script itself emits hooks that can be watched by others:
+activity_added <name>, activity_removed <name>, activity_changed <name>
+
+Use redecorate.pl to obtain visual feedback of activity changes. In its current form, it changes the window foreground color. You can easily change the script to edit other properties or issue commands.
 
 
 Known Issues
@@ -58,7 +63,6 @@ Missing functionality
 While this is already pretty decent for my personal needs, these are the next logical steps when enhancing the script, apart from fixing the issues listed above:
 
 1. Enhance `activity_tag` hook to support the same indexing parameters as `use_index`
-2. Instead of decorating with a color, allow custom commands to be issued when entering and leaving an activity
-3. Add functionality to move tags between activities
+2. Add functionality to move tags between activities
 
-All three of these are rather easy to implement. Patches are welcome!
+They both are rather easy to implement. Patches are welcome!

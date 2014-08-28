@@ -6,7 +6,6 @@ my %tagof = (); # mapping activity -> last used tag
 my $current_activity = -1;
 my $current_tag = -1;
 my %index = (); # for each activity, an array of tags ordered by their indices
-my %actcolor = (); # a distinguishing color string for each activity
 
 ## Query hlwm object system to find all tags according to their index.
 # When cycling through tags, the user expects them to be ordered by their native
@@ -22,15 +21,6 @@ sub build_index
 		chomp $tag;
 		push @{$index{$actof{$tag}}}, $tag;
 	}
-}
-
-## Give visual feedback of the activity selection
-# Right now we change the active window's border color to the activity's color.
-# TODO: This should not be hardcoded but rather do some configurable stuff.
-sub redecorate
-{
-	system("herbstclient", "set", "window_border_active_color",
-		"$actcolor{$current_activity}");
 }
 
 ## Handle tag addition
@@ -91,7 +81,7 @@ sub tag_selected
 	if ($actof{$tag} ne $current_activity) {
 		$current_activity = $actof{$tag};
 		print "implicitely switched to activity $current_activity\n";
-		redecorate();
+		system("herbstclient", "emit_hook", "activity_changed", "$current_activity");
 	}
 	$tagof{$current_activity} = $tag;
 	print "current tag of activity $current_activity is now $tag\n";
@@ -120,10 +110,11 @@ sub tag_cycle
 
 ## Activate an activity (nifty)
 # Send hlwm to the acitivity's current tag and also redecorate.
-sub activity_selected
+sub switch_activity
 {
 	my ($in, $activity) = @_;
 	if ($activity ne $current_activity) {
+		system("herbstclient", "lock");
 		$current_activity = $activity;
 		# move to a tag within the activity if possible
 		if ($tagof{$current_activity} ne -1) {
@@ -131,24 +122,25 @@ sub activity_selected
 		}
 		# If not possible, we still internally handle this as the current activity.
 		# Newly created tags will be assigned to the current (this) activity!
-		print "changed activity to $current_activity, '$actcolor{$current_activity}'\n";
-		redecorate(); #slightly inconsistent
+		print "changed activity to $current_activity\n";
+		system("herbstclient", "emit_hook", "activity_changed", "$current_activity");
+		system("herbstclient", "unlock");
 	}
 }
 
 ## Add new activity
 # Simple initialization only.
-sub activity_added
+sub add_activity
 {
-	my ($in, $activity, $color) = @_;
+	my ($in, $activity) = @_;
 	$tagof{$activity} = -1;
-	$actcolor{$activity} = $color;
-	print "added activity $activity with color $actcolor{$activity}\n";
+	print "added activity $activity\n";
+	system("herbstclient", "emit_hook", "activity_added", "$activity");
 }
 
 ## Remove activity
 # Poor tags, where do they go?
-sub activity_removed
+sub remove_activity
 {
 	# TODO: an exercise for the reader!
 }
@@ -164,15 +156,15 @@ while (<HOOKS>) {
 	chomp;
 	#print " # $_\n";
 	for ($_) {
-		tag_selected(split(/\t/)) when /tag_changed/;
-		tag_added(split(/\t/)) when /tag_added/;
-		tag_removed(split(/\t/)) when /tag_removed/;
-		tag_renamed(split(/\t/)) when /tag_renamed/;
-		tag_cycle(split(/\t/)) when /activity_tag/;
-		activity_selected(split(/\t/)) when /activity_changed/;
-		activity_added(split(/\t/)) when /activity_added/;
-		activity_removed(split(/\t/)) when /activity_removed/;
-		last OUTER when /reload/; # quit on reload
+		tag_selected(split(/\t/)) when /^tag_changed/;
+		tag_added(split(/\t/)) when /^tag_added/;
+		tag_removed(split(/\t/)) when /^tag_removed/;
+		tag_renamed(split(/\t/)) when /^tag_renamed/;
+		tag_cycle(split(/\t/)) when /^activity_tag/;
+		switch_activity(split(/\t/)) when /^activity_switch/;
+		add_activity(split(/\t/)) when /^activity_create/;
+		remove_activity(split(/\t/)) when /^activity_delete/;
+		last OUTER when /^reload/; # quit on reload
 	}
 }
 close HOOKS or die "unfinished love story: $! $?"; # happens on hlwm crash

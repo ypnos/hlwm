@@ -10,6 +10,8 @@ xsetroot -solid '#000000'
 
 # start activities script (in screen for later debugging)
 screen -S activities -d -m ~/.config/herbstluftwm/activities.pl
+# start redecoration script
+~/.config/herbstluftwm/redecorate.pl &
 
 # remove all existing keybindings
 hc keyunbind --all
@@ -27,15 +29,14 @@ hc keybind $Mod-l spawn xscreensaver-command -lock
 
 # activities and tags
 ACT_NAMES=( main devel write admin )
-ACT_COLORS=( '#DD0000' '#13B8E0' '#96E013' '#C713E0' ) # '#E04613'
 ACT_KEYS=( {1..4} )
 TAG_NAMES=( un deux trois )
 
 hc rename default "${ACT_NAMES[0]}_${TAG_NAMES[0]}" || true
 for j in ${!ACT_NAMES[@]} ; do
 	act=${ACT_NAMES[$j]}
-	hc emit_hook activity_added "$act" "${ACT_COLORS[$j]}"
-	hc emit_hook activity_changed "$act"
+	hc emit_hook activity_create "$act"
+	hc emit_hook activity_switch "$act"
 	for i in ${!TAG_NAMES[@]} ; do
 	    hc add "${act}_${TAG_NAMES[$i]}"
 	#    key="${TAG_KEYS[$i]}"
@@ -46,10 +47,10 @@ for j in ${!ACT_NAMES[@]} ; do
 	done
 	key="${ACT_KEYS[$j]}"
 	if ! [ -z "$key" ] ; then
-		hc keybind "$Mod-$key" emit_hook activity_changed "$act"
+		hc keybind "$Mod-$key" emit_hook activity_switch "$act"
 	fi
 done
-hc emit_hook activity_changed ${ACT_NAMES[0]}
+hc emit_hook activity_switch ${ACT_NAMES[0]}
 
 # cycle through tags
 #hc keybind $Ctrlalt-Right use_index +1 --skip-visible
