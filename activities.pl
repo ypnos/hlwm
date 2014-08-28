@@ -116,14 +116,16 @@ sub switch_activity
 	if ($activity ne $current_activity) {
 		system("herbstclient", "lock");
 		$current_activity = $activity;
+		print "changed activity to $current_activity\n";
+		# redecorate before tag switch to give the other script some time and
+		# be a bit better at avoiding flicker
+		system("herbstclient", "emit_hook", "activity_changed", "$current_activity");
 		# move to a tag within the activity if possible
 		if ($tagof{$current_activity} ne -1) {
 			system("herbstclient", "use", $tagof{$current_activity});
 		}
 		# If not possible, we still internally handle this as the current activity.
 		# Newly created tags will be assigned to the current (this) activity!
-		print "changed activity to $current_activity\n";
-		system("herbstclient", "emit_hook", "activity_changed", "$current_activity");
 		system("herbstclient", "unlock");
 	}
 }
