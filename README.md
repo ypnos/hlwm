@@ -35,15 +35,17 @@ To be able to read debug output during the session you can run it like this:
 
 Use herstbclient (directly or via key binding) to issue commands:
 
-`emit_hook activity_create _name_` add an activity
-`emit_hook activity_switch _name_` switch to activity
-`emit_hook activity_delete _name_` TODO: not implemented yet!
-`emit_hook activity_tag _next|prev_` cycle to right/left tag within activity
+- `emit_hook activity_create _name_` add an activity
+- `emit_hook activity_switch _name_` switch to activity
+- `emit_hook activity_delete _name_` TODO: not implemented yet!
+- `emit_hook activity_tag _next|prev_` cycle to right/left tag within activity
 
 Newly created tags are always added to the current activity. It is not possible yet to move tags between activities (TODO).
 
 The activities script itself emits hooks that can be watched by others:
-activity_added <name>, activity_removed <name>, activity_changed <name>
+- activity_added _name_
+- activity_removed _name_
+- activity_changed _name_
 
 Use redecorate.pl to obtain visual feedback of activity changes. In its current form, it changes the window foreground color. You can easily change the script to edit other properties or issue commands.
 
