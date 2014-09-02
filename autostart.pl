@@ -1,5 +1,22 @@
 #!/usr/bin/perl
 use strict;
+sub hc; sub ext;
+
+sub custom_init {
+	# set background
+	ext "xsetroot -solid '#000000'";
+
+	# start activities script (in screen for later debugging)
+	ext "screen -S activities -d -m ~/.config/herbstluftwm/activities.pl";
+	# start redecoration script
+	ext "~/.config/herbstluftwm/redecorate.pl&";
+
+	# remove panel space from below
+	hc "pad 0 0 0 32 0";
+
+	# start compton
+	#ext "compton -b --config ~/.config/compton.conf";
+}
 
 # ACTIVITIES AND TAGS
 my @activities = qw( main devel write admin ); # defines the order
@@ -13,7 +30,7 @@ my %act_keys = (main => 1, devel => 2, write => 3, admin => 4);
 
 # KEYBINDINGS
 my $Mod = "Mod4"; # win
-my $Alt = "Mod1"; # alt key
+my $Alt = "Mod1"; # alt
 my $Ctrlalt = "Mod1-Control"; # ctrl+alt
 my $RESIZESTEP = 0.05;
 my $RESIZESTEPA = 0.01;
@@ -41,7 +58,7 @@ my %bindings = (
 	# layouting
 	"$Mod-r" => "remove",
 	"$Mod-space" => "cycle_layout 1",
-	"Mod-Control-space" => "split explode",
+	"$Mod-Control-space" => "split explode",
 
 	"$Mod-u" => "split vertical 0.5",
 	"$Mod-o" => "split horizontal 0.5",
@@ -75,6 +92,7 @@ my %bindings = (
 	"$Mod-Control-Right" => "shift right"
 );
 
+# MOUSE BINDINGS
 my %mbindings = (
 	"$Mod-Button1" => "move",
 	"$Mod-Button2" => "zoom",
@@ -83,6 +101,7 @@ my %mbindings = (
 #	"$Mod-Button5" => "call use_index -1"
 );
 
+# SETTINGS
 my %settings = (
 	# behavior
 	focus_follows_mouse => 1,
@@ -111,65 +130,37 @@ my %settings = (
 	tree_style => '╾│ ├└╼─┐'
 );
 
-# ROUTINES
+# RULES (note: these are not executed in the order they come in!)
+my %rules = (
+	" " => 'focus=on', # normally do focus new clients
+	"windowtype~'_NET_WM_WINDOW_TYPE_(DIALOG|UTILITY|SPLASH)'" => 'pseudotile=on',
+	"windowtype='_NET_WM_WINDOW_TYPE_DIALOG'" => 'focus=on',
+	"windowtype~'_NET_WM_WINDOW_TYPE_(NOTIFICATION|DOCK|DESKTOP)'" => 'manage=off',
+);
 
+# CODE (in general the stuff below doesn't need any touching)
 sub ext {
 	system("@_");
 }
-
 sub hc {
     system("herbstclient @_");
 }
-
-sub keybinds(\%) {
-	my $ref = shift;
+sub chain($\%) {
+	my ($cmd, $ref) = @_;
 	my $output;
 	while (my ($key, $value) = each(%$ref)) {
-		$output .= " ßß keybind $key $value";
+		$output .= " ßß $cmd $key $value";
 	}
 	hc("chain $output");
 }
 
-sub mousebinds(\%) {
-	my $ref = shift;
-	my $output;
-	while (my ($key, $value) = each(%$ref)) {
-		$output .= " ßß mousebind $key $value";
-	}
-	hc("chain $output");
-}
+# reset
+hc "chain / emit_hook reload / keyunbind --all / mouseunbind --all / unrule --all";
 
-sub settings(\%) {
-	my $ref = shift;
-	my $output;
-	while (my ($key, $value) = each(%$ref)) {
-		$output .= " ßß set $key $value";
-	}
-	hc("chain $output");
-}
+# everything else we need to perform before we continue
+custom_init();
 
-sub flush {
-	hc "emit_hook reload";
-
-	# set background
-	ext("xsetroot -solid '#000000'");
-
-	# start activities script (in screen for later debugging)
-	ext("screen -S activities -d -m ~/.config/herbstluftwm/activities.pl");
-	# start redecoration script
-	ext("~/.config/herbstluftwm/redecorate.pl&");
-
-	# unset bindings, rules
-	hc "keyunbind --all";
-	hc "mouseunbind --all";
-	hc "unrule -F";
-}
-
-
-# MAIN
-
-flush();
-
+# create activities and tags
 hc qq(rename default "$act_tags{$activities[0]}[0]");
 for my $act (@activities) {
     hc qq(emit_hook activity_create "$act");
@@ -184,23 +175,11 @@ for my $act (@activities) {
 }
 hc qq(emit_hook activity_switch "$activities[0]");
 
-# set bindings, settings as defined above
-keybinds(%bindings);
-mousebinds(%mbindings);
-settings(%settings);
-
-# set rules
-hc "rule focus=on"; # normally do focus new clients
-
-hc qq(rule "windowtype~_NET_WM_WINDOW_TYPE_(DIALOG|UTILITY|SPLASH)" pseudotile=on);
-hc qq(rule "windowtype=_NET_WM_WINDOW_TYPE_DIALOG'" focus=on);
-hc qq(rule "windowtype~_NET_WM_WINDOW_TYPE_(NOTIFICATION|DOCK|DESKTOP)" manage=off);
-
-# remove panel space from below
-hc "pad 0 0 0 32 0";
+# set everything as defined above
+chain('keybind', %bindings);
+chain('mousebind', %mbindings);
+chain('set', %settings);
+chain('rule', %rules);
 
 # unlock, just to be sure
 hc "unlock";
-
-# start compton
-#ext("compton -b --config ~/.config/compton.conf");
