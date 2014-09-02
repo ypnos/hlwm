@@ -163,15 +163,15 @@ custom_init();
 # create activities and tags
 hc qq(rename default "$act_tags{$activities[0]}[0]");
 for my $act (@activities) {
-    hc qq(emit_hook activity_create "$act");
-    hc qq(emit_hook activity_switch "$act");
+	hc qq(emit_hook activity_create "$act");
+	hc qq(emit_hook activity_switch "$act");
 	for my $tag (@{$act_tags{$act}}) {
 		hc qq(add "$tag");
 	}
 	my $key = $act_keys{$act};
 	if (!! "$key") {
-        hc qq(keybind $Mod-$key emit_hook activity_switch "$act");
-    }
+		hc qq(keybind $Mod-$key emit_hook activity_switch "$act");
+	}
 }
 hc qq(emit_hook activity_switch "$activities[0]");
 
