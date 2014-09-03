@@ -7,7 +7,13 @@ my %matchgroups = (
 	browser => ".*Chromium",
 	terminal => "QTerminal",
 	editor => ".*SciTE",
-	mail => ".*Thunderbird"
+	mail => "(.*Thunderbird|^Write: )",
+	pdf => ".*Okular",
+	ide => "(.*Qt Creator|CMake Wizard)",
+	qgerbil => "(^Gerbil - |Open Descriptor or Image File)",
+	irc => "^Quassel IRC",
+	geeqie => ".*Geeqie",
+	diff => ".*Meld"
 );
 
 sub secfmt {
@@ -23,13 +29,22 @@ my %actsum;
 my %acttagsum;
 my %acttagtitlesum;
 my %titlesum;
+my $inactivesum = 0;
 
+my @entry;
 while (<$log>)  {
 	chomp;
-	my @entry = split /\t/;
+	next if /^spurious/;
+	@entry = split /\t/;
 	if (@oldentry) {
 		my ($date, $time, $stamp, $act, $tag, $title) = @oldentry;
 		my $spent = @entry[2] - $stamp;
+
+		if ($act eq 'inactive') {
+			$inactivesum += $spent;
+			next;
+		}
+
 		while (my ($name, $regex) = each %matchgroups)
 		{
 			$title = $name if $title =~ /$regex/;
@@ -40,6 +55,7 @@ while (<$log>)  {
 			$_ = ($_ + $spent);
 		}
 	}
+} continue {
 	@oldentry = @entry;
 }
 
@@ -61,3 +77,7 @@ print "=========================== Applications ===========================\n";
 foreach my $title (sort { $titlesum{$b} <=> $titlesum{$a} } keys %titlesum) {
 	printf "%s %s\n", secfmt($titlesum{$title}), $title;
 }
+
+print "============================== Breaks ==============================\n";
+printf "%s %s\n", secfmt($inactivesum), "Inactive";
+

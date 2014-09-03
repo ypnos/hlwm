@@ -3,13 +3,18 @@ use strict;
 sub hc; sub ext;
 
 sub custom_init {
+	my $path = '~/.config/herbstluftwm';
+
 	# set background
 	ext "xsetroot -solid '#000000'";
 
+	# timetracker
+	ext "$path/timetrack.pl >> $path/focus.log &";
+
 	# start activities script (in screen for later debugging)
-	ext "screen -S activities -d -m ~/.config/herbstluftwm/activities.pl";
+	ext "screen -S activities -d -m $path/activities.pl";
 	# start redecoration script
-	ext "~/.config/herbstluftwm/redecorate.pl&";
+	ext "$path/redecorate.pl&";
 
 	# remove panel space from below
 	hc "pad 0 0 0 32 0";
