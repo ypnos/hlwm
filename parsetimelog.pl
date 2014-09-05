@@ -14,14 +14,15 @@ my %matchgroups = (
 	qgerbil => "(^Gerbil - |Open Descriptor or Image File)",
 	chat => "(^Quassel IRC|.*Skype™.*)",
 	geeqie => ".*Geeqie",
-	diff => ".*Meld"
+	diff => ".*Meld",
+	office => "(abiword|^LibreOffice|.*- LibreOffice.*)"
 );
 
 sub secfmt {
 	strftime("%T", gmtime(shift));
 }
 
-my ($file) = @ARGV;
+my ($file, $filter) = @ARGV;
 open my $log, $file or die "Could not open $file: $!\n";
 
 my $laststamp = -1;
@@ -41,6 +42,8 @@ while (<$log>)  {
 	if (@oldentry) {
 		my ($date, $time, $stamp, $act, $tag, $title) = @oldentry;
 		my $spent = @entry[2] - $stamp;
+
+		next if ($filter and not ($date =~ /$filter/));
 
 		$total += $spent;
 		if ($act eq 'inactive') {
