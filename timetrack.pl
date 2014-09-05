@@ -10,12 +10,16 @@ my $activity = 0;
 my $tag = 0;
 my $title = 0;
 my $lastevent = -1;
+my $inactive = 0;
 
 sub timestamp
 {
 	my ($ts, $msg) = @_;
 	my $dt = strftime "%Y-%m-%d%t%T", localtime($ts);
-	print("$dt\t$ts\t$msg\n") if $title;
+
+	# for debugging, also print when this was logged
+	my $debugt = strftime "%Y-%m-%d%t%T", localtime(time);
+	print("$dt\t$ts\t$msg\t$debugt\n") if $title;
 }
 
 sub commit
@@ -53,12 +57,18 @@ sub update_title
 
 sub enter_void
 {
+	return if $inactive;
+	$inactive = 1;
 	commit();
+	# TODO: we could set the clock back here if we know the idle time for
+	# screensaver activation. However, we also would need to
+	# determine if the user activates it directly
 	timestamp(time, "inactive");
 }
 
 sub leave_void
 {
+	$inactive = 0;
 	# reset timer such that last commit will be repeated
 	$lastevent = time;
 }
