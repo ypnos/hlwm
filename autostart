@@ -111,6 +111,7 @@ my %settings = (
 	# behavior
 	focus_follows_mouse => 1,
 	mouse_recenter_gap => 0,
+	snap_gap => 2,
 
 	# colors
 	frame_border_active_color => '#000000',
