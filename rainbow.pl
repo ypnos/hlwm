@@ -17,6 +17,9 @@ while (true) {
 	usleep($delay);
 	my $hex, $h, $s, $v;
 	if ($first) {
+		# workaround for a hlwm bug
+		next if `herbstclient attr clients.focus.fullscreen` =~ /^true/;
+
 		$hex = substr(`herbstclient get $property`, 1, -1);
 		($h, $s, $v) = rgb2hsv(unpack 'C*', pack 'H*', $hex);
 		$h = int($h + 0.99); # ceil to prevent getting stuck
