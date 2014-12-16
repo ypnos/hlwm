@@ -10,19 +10,21 @@ my $activity = 0;
 my $tag = 0;
 my $title = 0;
 my $lastevent = -1;
+my $inactive = 0;
 
 sub timestamp
 {
 	my ($ts, $msg) = @_;
 	my $dt = strftime "%Y-%m-%d%t%T", localtime($ts);
-	print("$dt\t$ts\t$msg\n") if $title;
+
+	# for debugging, also print when this was logged
+	my $debugt = strftime "%Y-%m-%d%t%T", localtime(time);
+	print("$dt\t$ts\t$msg\t$debugt\n") if $title;
 }
 
 sub commit
 {
-	if ($lastevent > (time - 0.25)) {
-		#print "holding off -> ".time." vs $lastevent \n";
-	} else {
+	if ($lastevent > 0 and $lastevent < (time - 0.25)) {
 		timestamp($lastevent, "$activity\t$tag\t$title");
 	}
 	$lastevent = time;
@@ -30,7 +32,9 @@ sub commit
 
 sub lastsupper
 {
-	commit() and exit;
+	commit();
+	timestamp(time, "inactive");
+	exit;
 }
 
 sub update_activity
@@ -53,14 +57,20 @@ sub update_title
 
 sub enter_void
 {
-	$lastevent = -1;
-	timestamp("inactive");
+	return if $inactive;
+	$inactive = 1;
+	commit();
+	# TODO: we could set the clock back here if we know the idle time for
+	# screensaver activation. However, we also would need to
+	# determine if the user activates it directly
+	timestamp(time, "inactive");
 }
 
 sub leave_void
 {
-	$lastevent = -1;
-	timestamp("$activity\t$tag\t$title");
+	$inactive = 0;
+	# reset timer such that last commit will be repeated
+	$lastevent = time;
 }
 
 ## main routine
@@ -70,6 +80,9 @@ open my $hhandle, "herbstclient -i '(activity_changed|tag_changed|focus_changed|
 	or die "can't fork: $!";
 open my $shandle, "xscreensaver-command -watch|" or die "can't fork: $!";
 my $sel = IO::Select->new($hhandle, $shandle);
+
+# set output to flush on every write to make log readable while running
+$| = 1;
 
 # process incoming messages
 OUTER:
