@@ -85,8 +85,7 @@ my $sel = IO::Select->new($hhandle, $shandle);
 $| = 1;
 
 # process incoming messages
-OUTER:
-while(my @ready = $sel->can_read) {
+OUTER: while(my @ready = $sel->can_read) {
 	foreach my $fh (@ready) {
 		my $buffer = readline($fh);
 		chomp $buffer;
