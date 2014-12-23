@@ -3,23 +3,29 @@
 use strict;
 use POSIX qw(strftime);
 use List::Util qw(any);
+#use GD;
 
 my %matchgroups = (
-	browser => ".*Chromium",
+	browser => "(.*Chromium|rekonq)",
 	terminal => "QTerminal",
 	editor => ".*SciTE",
-	mail => "(.*Thunderbird|^Write: |^Sending Message)",
+	mail => "(.*Thunderbird|^Write: |^Sending Message|^Attach File)",
 	pdf => ".*Okular",
 	ide => "(.*Qt Creator|CMake Wizard)",
 	qgerbil => "(^Gerbil - |Open Descriptor or Image File)",
 	chat => "(^Quassel IRC|.*Skype™.*)",
 	geeqie => ".*Geeqie",
 	diff => ".*Meld",
-	office => "(abiword|^LibreOffice|.*- LibreOffice.*)"
+	office => "(abiword|^LibreOffice|.*- LibreOffice.*|.*Gnumeric)",
+	dtp => "^Scribus",
+	win => "^rdesktop",
+	gimp => "(.*GIMP|GNU Image Manipulation Program)",
+	dialog => "(Open File|Open|Saved Files|Import|Export|Pick a Font|Options|Save As|New|New Document|Warning|Confirm)"
 );
 
 sub secfmt {
-	strftime("%T", gmtime(shift));
+	sprintf "%2dd %02d:%02d:%02d",(gmtime shift)[7,2,1,0];
+#	strftime("%T", gmtime(shift));
 }
 
 my ($file, $filter) = @ARGV;
@@ -84,9 +90,11 @@ foreach my $act (sort { $actsum{$b} <=> $actsum{$a} } keys %actsum) {
 
 print "=========================== Applications ===========================\n";
 foreach my $title (sort { $titlesum{$b} <=> $titlesum{$a} } keys %titlesum) {
+	last if ($titlesum{$title} < 10); # don't report peanuts
 	printf "%s %s\n", secfmt($titlesum{$title}), $title;
 }
 
 print "============================= General ==============================\n";
-printf "%s %s\n", secfmt($inactivesum), "Inactive";
-printf "Total %d days, %d hours, %d mins and %d secs recorded\n",(gmtime $total)[7,2,1,0];
+printf "%s %s\n", secfmt($inactivesum), "inactive";
+printf "%s %s\n", secfmt($total), "recorded in total";
+
