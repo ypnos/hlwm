@@ -65,6 +65,7 @@ Missing functionality
 While this is already pretty decent for my personal needs, these are the next logical steps when enhancing the script, apart from fixing the issues listed above:
 
 1. Enhance `activity_tag` hook to support the same indexing parameters as `use_index`
-2. Add functionality to move tags between activities
+2. Add a hook similar to `activity_tag` for `move_index`
+3. Add functionality to move tags between activities
 
 They both are rather easy to implement. Patches are welcome!
