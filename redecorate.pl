@@ -6,7 +6,8 @@ my %colors = (
 	main => '#DD0000',
 	devel => '#13B8E0',
 	write => '#96E013',
-	admin => '#C713E0' # '#E04613'
+	admin => '#C713E0',
+   	tests => '#E04613'
 );
 
 ## Apply activity color
