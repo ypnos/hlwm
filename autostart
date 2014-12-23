@@ -9,7 +9,7 @@ sub custom_init {
 	ext "xsetroot -solid '#000000'";
 
 	# timetracker
-	ext "$path/timetrack.pl >> $path/focus.log &";
+	#ext "$path/timetrack.pl >> $path/focus.log &";
 
 	# start activities script (in screen for later debugging)
 	ext "screen -S activities -d -m $path/activities.pl";
@@ -24,14 +24,15 @@ sub custom_init {
 }
 
 # ACTIVITIES AND TAGS
-my @activities = qw( main devel write admin ); # defines the order
+my @activities = qw( main devel write admin tests); # defines the order
 my %act_tags = (
 	main => [ 'browse', 'mail', 'main_trois' ],
 	devel => [ 'ide', 'foo', 'bar' ],
 	write => [ 'tex', 'write_deux', 'write_trois' ],
-	admin => [ 'admin_un', 'root', 'admin_trois' ]
+	admin => [ 'admin_un', 'root', 'admin_trois' ],
+	tests => [ 'tests_un', 'tests_deux', 'tests_trois' ]
 );
-my %act_keys = (main => 1, devel => 2, write => 3, admin => 4);
+my %act_keys = (main => 1, devel => 2, write => 3, admin => 4, tests => 5);
 
 # KEYBINDINGS
 my $Mod = "Mod4"; # win
