@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use v5.20;
+use v5.14;
 
 my %actof = (); # mapping tag -> activity
 my %tagof = (); # mapping activity -> last used tag

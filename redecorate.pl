@@ -20,7 +20,7 @@ sub redecorate
 }
 
 ## main routine
-use v5.20;
+use v5.14;
 
 # set up a pipe for reading hooks
 open HOOKS, "herbstclient -i '(activity_changed|reload)'|"

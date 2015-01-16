@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # This script tracks usage of windows / tags / activities over time.
-use v5.20;
+use v5.14;
 use IO::Select;
 use Time::HiRes qw(time); # time() delivers floating seconds
 use POSIX qw(strftime);
