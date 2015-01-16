@@ -11,8 +11,9 @@ sub custom_init {
 	# timetracker
 	#ext "$path/timetrack.pl >> $path/focus.log &";
 
-	# start activities script (in screen for later debugging)
-	ext "screen -S activities -d -m $path/activities.pl";
+	# start activities script
+	#ext "screen -S activities -d -m $path/activities.pl";
+	ext "$path/activities.pl&";
 	# start redecoration script
 	ext "$path/redecorate.pl&";
 
